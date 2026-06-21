@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mesa de Ouro — Analista XAU/USD</title>
+<title>AUmanager — Analista XAU/USD</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -224,7 +224,7 @@
 <!-- ===== AUTH GATE ===== -->
 <div class="gate" id="gate">
   <div class="gate-box">
-    <h2>Mesa de Ouro</h2>
+    <h2>AUmanager</h2>
     <div class="gsub">Análise XAU/USD · acesso de assinante</div>
     <div class="gate-tabs">
       <span class="on" id="tabLogin">Entrar</span>
@@ -244,7 +244,7 @@
 
 <header>
   <div class="brand">
-    <h1>Mesa de Ouro <span class="au">XAU/USD</span></h1>
+    <h1>AUmanager <span class="au">XAU/USD</span></h1>
     <span class="sub">Leitura de analista · técnico + geopolítica</span>
   </div>
   <span class="modepill demo" id="modePill">modo demo</span>
@@ -324,17 +324,17 @@
   recomendação de investimento, oferta ou solicitação de compra ou venda de qualquer ativo.
   O mercado de ouro envolve risco e alta volatilidade; decisões de operação são de inteira
   responsabilidade do usuário. Desempenho passado não garante resultado futuro.
-  &nbsp;·&nbsp; Mesa de Ouro · uso analítico.
+  &nbsp;·&nbsp; AUmanager · uso analítico.
 </footer>
 
 <script>
 /* =========================================================
-   Mesa de Ouro — núcleo do analista
+   AUmanager — núcleo do analista
    Modo demo embutido. Cola a URL do Worker => modo real.
    ========================================================= */
 
 /* ===================== CONFIG ===================== */
-/* >>> COLE AQUI a config do seu projeto Firebase (Mesa de Ouro) <<< */
+/* >>> COLE AQUI a config do seu projeto Firebase (AUmanager) <<< */
 const firebaseConfig = {
   apiKey: "AIzaSyAM_p_2SocFfQycHHH63PTX8Otz0eN8L0Y",
   authDomain: "aumanager-6dbd3.firebaseapp.com",
@@ -769,7 +769,7 @@ function fireNotif(a,d){
   const label={price_above:'Preço cruzou acima de',price_below:'Preço cruzou abaixo de',rsi_above:'RSI acima de',rsi_below:'RSI abaixo de'};
   const msg=`${label[a.type]} ${a.val} · ouro em $${fmt(d.price)}`;
   if(State.notifReady && 'Notification' in window && Notification.permission==='granted'){
-    new Notification('Mesa de Ouro · alerta de observação',{body:msg+'\nAvalie o cenário antes de decidir.'});
+    new Notification('AUmanager · alerta de observação',{body:msg+'\nAvalie o cenário antes de decidir.'});
   }else{
     console.log('[ALERTA]',msg);
   }
