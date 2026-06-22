@@ -587,11 +587,10 @@ function demoData(){
 async function loadData(){
   if(State.workerUrl){
     try{
-      // anexa o token do Firebase para o Worker validar acesso server-side
+      // manda o UID do usuário para o Worker conferir o status no Firebase
       let headers = { 'Content-Type':'application/json' };
       if(Auth.user && Auth.access==='full'){
-        const tok = await Auth.user.getIdToken();
-        headers['Authorization'] = 'Bearer ' + tok;
+        headers['X-User-Id'] = Auth.user.uid;
       }
       const ep = (Auth.access==='full') ? '/data' : '/data?demo=1';
       const r=await fetch(State.workerUrl.replace(/\/$/,'')+ep,{headers,cache:'no-store'});
@@ -616,6 +615,7 @@ function setMode(m){
 
 /* ---------- RENDER: ticker ---------- */
 function fmt(n){return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function renderTicker(d){
   const chg=d.price-d.prevClose;
   const pct=(chg/d.prevClose*100);
@@ -701,6 +701,14 @@ function renderIndicators(d){
 
 /* ---------- RENDER: analyst reading (rule-based no demo) ---------- */
 function renderReading(d){
+  // Se o Worker mandou a leitura da IA (modo completo), usa ela.
+  if(d.reading && Auth.access==='full'){
+    const paras = d.reading.split(/\n+/).filter(Boolean);
+    document.getElementById('reading').innerHTML =
+      '<span class="bias lateral">leitura do analista IA</span>' +
+      paras.map(p=>`<p>${escapeHtml(p)}</p>`).join('');
+    return;
+  }
   // No deploy real, este texto pode vir do Worker (API Anthropic).
   // No demo, geramos uma leitura coerente por regras.
   const x=d.indicators;
