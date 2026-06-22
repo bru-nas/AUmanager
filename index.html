@@ -318,11 +318,11 @@
   <!-- Left column -->
   <div style="display:flex;flex-direction:column;gap:16px">
     <div class="card">
-      <h2>Preço · candles H4 <span class="badge" id="chartRange"></span></h2>
+      <h2>Preço · candles M15 <span class="badge" id="chartRange"></span></h2>
       <canvas id="chart" height="300"></canvas>
     </div>
     <div class="card">
-      <h2>Viés do Mercado <span class="badge">probabilístico · para estudo</span></h2>
+      <h2>Viés do Mercado <span class="badge">gatilho · provável entrada</span></h2>
       <div id="biasPanel"></div>
     </div>
     <div class="card">
@@ -387,6 +387,8 @@
   recomendação de investimento, oferta ou solicitação de compra ou venda de qualquer ativo.
   O mercado de ouro envolve risco e alta volatilidade; decisões de operação são de inteira
   responsabilidade do usuário. Desempenho passado não garante resultado futuro.
+  O Viés do Mercado é uma convergência ponderada dos indicadores (tendência, RSI, MACD, médias) —
+  leitura probabilística, não recomendação. A decisão é sua.
   &nbsp;·&nbsp; AUmanager · uso analítico.
 </footer>
 
@@ -900,9 +902,7 @@ function renderBias(d){
       <div class="b" style="width:${b.buyPct}%"></div>
       <div class="s" style="width:${b.sellPct}%"></div>
     </div>
-    <div class="bias-legend"><span>Compra ${b.buyPct}%</span><span>Venda ${b.sellPct}%</span></div>
-    <div class="bias-note">Convergência ponderada dos indicadores (tendência, RSI, MACD, médias).
-      É leitura probabilística para estudo, não recomendação. A decisão é sua.</div>`;
+    <div class="bias-legend"><span>Compra ${b.buyPct}%</span><span>Venda ${b.sellPct}%</span></div>`;
 }
 
 /* ===================== BANCA + OPERAÇÃO ===================== */
