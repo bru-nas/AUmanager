@@ -166,6 +166,45 @@
   }
   footer strong{color:var(--warn)}
   .full{grid-column:1/-1}
+
+  /* ---- Bias panel ---- */
+  .bias-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  .bias-label{font-family:var(--disp);font-size:20px}
+  .bias-label.compra{color:var(--up)} .bias-label.venda{color:var(--down)} .bias-label.neutro{color:var(--muted)}
+  .bias-pct{font-size:28px;font-variant-numeric:tabular-nums}
+  .bias-pct.compra{color:var(--up)} .bias-pct.venda{color:var(--down)} .bias-pct.neutro{color:var(--muted)}
+  .bias-bar{height:10px;border-radius:6px;background:var(--panel-2);overflow:hidden;display:flex;margin-bottom:6px}
+  .bias-bar .b{background:var(--up);height:100%}
+  .bias-bar .s{background:var(--down);height:100%}
+  .bias-legend{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+  .bias-note{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5}
+
+  /* ---- Operation panel ---- */
+  .op-setup{display:flex;flex-direction:column;gap:10px}
+  .op-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .op-row label{font-size:11px;color:var(--muted);min-width:70px}
+  .op-row input,.op-row select{flex:1;min-width:90px;background:var(--panel-2);border:1px solid var(--line);
+    color:var(--ink);font-family:var(--mono);font-size:13px;padding:8px 10px;border-radius:5px;outline:none}
+  .op-row input:focus{border-color:var(--gold)}
+  .op-side{display:flex;gap:6px}
+  .op-side button{flex:1}
+  .op-side button.sel-buy{background:var(--up);color:#06281e}
+  .op-side button.sel-sell{background:var(--down);color:#2a0a0f}
+  .op-side button.off{background:transparent;border:1px solid var(--line);color:var(--muted)}
+  .op-live{display:flex;flex-direction:column;gap:10px}
+  .op-pnl{text-align:center;padding:14px;border-radius:8px;background:var(--panel-2)}
+  .op-pnl .big{font-size:30px;font-variant-numeric:tabular-nums}
+  .op-pnl .big.win{color:var(--up)} .op-pnl .big.loss{color:var(--down)}
+  .op-pnl .sub{font-size:12px;color:var(--muted);margin-top:3px}
+  .op-levels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center}
+  .op-levels .lv{background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:8px}
+  .op-levels .lv .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .op-levels .lv .v{font-size:14px;margin-top:2px;font-variant-numeric:tabular-nums}
+  .op-exit{padding:12px;border-radius:8px;text-align:center;font-size:13px;font-weight:600}
+  .op-exit.go{background:rgba(224,86,107,.15);border:1px solid var(--down);color:var(--down)}
+  .op-exit.hold{background:rgba(63,184,143,.1);border:1px solid var(--up);color:var(--up)}
+  .stop-warn{background:rgba(232,161,58,.12);border:1px solid var(--warn);color:var(--warn);
+    border-radius:6px;padding:10px;font-size:12px;margin-top:8px;line-height:1.5}
   @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
   /* ---- Auth gate ---- */
@@ -237,7 +276,8 @@
     <button id="gSubmit">Entrar</button>
     <div class="gate-err" id="gErr"></div>
     <div class="gate-foot">
-      <a id="gDemo">Entrar no modo demo sem conta →</a>
+      <a id="gForgot">Esqueci minha senha</a><br>
+      <a id="gDemo" style="display:inline-block;margin-top:8px">Entrar no modo demo sem conta →</a>
     </div>
   </div>
 </div>
@@ -268,6 +308,10 @@
       <canvas id="chart" height="300"></canvas>
     </div>
     <div class="card">
+      <h2>Viés do Mercado <span class="badge">probabilístico · para estudo</span></h2>
+      <div id="biasPanel"></div>
+    </div>
+    <div class="card">
       <h2>Leitura do Analista <span class="badge">contexto, não recomendação</span></h2>
       <div class="reading" id="reading"></div>
     </div>
@@ -275,6 +319,11 @@
 
   <!-- Right column -->
   <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="card" id="opCard">
+      <h2>Minha Operação <span class="badge">acompanhamento real</span></h2>
+      <div id="opPanel"></div>
+    </div>
+
     <div class="card">
       <h2>Indicadores técnicos</h2>
       <div class="ind" id="indicators"></div>
@@ -308,11 +357,11 @@
     </div>
   </div>
 
-  <!-- Config -->
-  <div class="card full">
-    <h2>Conexão de dados</h2>
+  <!-- Config (somente DONO) -->
+  <div class="card full" id="cfgCard" style="display:none">
+    <h2>Conexão de dados <span class="badge">somente administrador</span></h2>
     <div class="cfg">
-      <input type="text" id="workerUrl" placeholder="https://seu-worker.miztella.workers.dev  (deixe vazio para modo demo)">
+      <input type="text" id="workerUrl" value="https://aumanager.miztella.workers.dev">
       <button id="connectBtn">Conectar Worker</button>
       <button class="ghost" id="refreshBtn">Atualizar</button>
     </div>
@@ -397,6 +446,17 @@ document.getElementById('gDemo').onclick = ()=>{
   showGate(false); applyAccess(); refresh();
 };
 document.getElementById('gSubmit').onclick = doAuth;
+document.getElementById('gForgot').onclick = async ()=>{
+  const email = document.getElementById('gEmail').value.trim();
+  if(!email){ gateError('Digite seu e-mail acima primeiro.'); return; }
+  if(!fbReady){ gateError('Indisponível no momento.'); return; }
+  try{
+    await auth.sendPasswordResetEmail(email);
+    gateError('');
+    document.getElementById('gErr').style.color='var(--up)';
+    document.getElementById('gErr').textContent='E-mail de redefinição enviado. Confira sua caixa.';
+  }catch(e){ gateError('Não foi possível enviar. Verifique o e-mail digitado.'); }
+};
 document.getElementById('gPass').addEventListener('keydown', e=>{ if(e.key==='Enter') doAuth(); });
 
 async function doAuth(){
@@ -526,6 +586,9 @@ function applyAccess(){
     out.style.display = Auth.user ? '' : 'none';
   }
   gateDemoFeatures();
+  // campo de conexão do Worker visível só para o DONO
+  const cfg = document.getElementById('cfgCard');
+  if(cfg) cfg.style.display = Auth.isDono ? '' : 'none';
 }
 
 /* No demo, trava alertas/push e marca a leitura como demonstração */
@@ -537,11 +600,13 @@ function gateDemoFeatures(){
   if(addBtn) addBtn.disabled = !isFull;
   if(notifBtn) notifBtn.disabled = !isFull;
   if(alertCard) alertCard.classList.toggle('locked', !isFull);
+  const opCard = document.getElementById('opCard');
+  if(opCard) opCard.classList.toggle('locked', !isFull);
 }
 
 
 const State = {
-  workerUrl: '',
+  workerUrl: 'https://aumanager.miztella.workers.dev',
   data: null,        // {price, prevClose, dayHigh, dayLow, candles[], indicators{}, news[]}
   alerts: [],        // {id, type, val, fired}
   notifReady: false,
@@ -806,18 +871,209 @@ document.getElementById('connectBtn').onclick=async()=>{
 };
 document.getElementById('refreshBtn').onclick=refresh;
 
+/* ===================== VIÉS DO MERCADO ===================== */
+function renderBias(d){
+  const el=document.getElementById('biasPanel');
+  if(!el) return;
+  const b=d.bias;
+  if(!b){ el.innerHTML='<div style="color:var(--muted);font-size:12px">Sem dados.</div>'; return; }
+  el.innerHTML=`
+    <div class="bias-head">
+      <span class="bias-label ${b.side}">${b.label}</span>
+      <span class="bias-pct ${b.side}">${b.pct}%</span>
+    </div>
+    <div class="bias-bar">
+      <div class="b" style="width:${b.buyPct}%"></div>
+      <div class="s" style="width:${b.sellPct}%"></div>
+    </div>
+    <div class="bias-legend"><span>Compra ${b.buyPct}%</span><span>Venda ${b.sellPct}%</span></div>
+    <div class="bias-note">Convergência ponderada dos indicadores (tendência, RSI, MACD, médias).
+      É leitura probabilística para estudo, não recomendação. A decisão é sua.</div>`;
+}
+
+/* ===================== BANCA + OPERAÇÃO ===================== */
+const Op = {
+  banca: 0,            // R$ informado pela pessoa
+  riscoPct: 1,         // % da banca por operação (informativo)
+  ativa: null,         // {side, entry, alvo, stop, size, ts}
+  perdasSeguidas: 0,
+  ganhoDia: 0,         // soma do dia (R$) — só de operações registradas
+  metaDia: 0,          // meta de ganho diária (R$)
+};
+
+function loadOp(){
+  try{
+    const raw=localStorage.getItem('aumanager-op');
+    if(raw){ Object.assign(Op, JSON.parse(raw)); }
+  }catch(_){}
+}
+function saveOp(){ try{ localStorage.setItem('aumanager-op', JSON.stringify(Op)); }catch(_){} }
+
+function renderOp(d){
+  const el=document.getElementById('opPanel');
+  if(!el) return;
+  const price = d ? d.price : 0;
+
+  // se não tem banca definida, pede primeiro
+  if(!Op.banca){
+    el.innerHTML=`
+      <div class="op-setup">
+        <div class="op-row"><label>Sua banca</label>
+          <input type="number" id="opBanca" placeholder="ex: 1000" step="0.01"></div>
+        <div class="op-row"><label>Risco %</label>
+          <input type="number" id="opRisco" value="1" step="0.1"></div>
+        <div class="op-row"><label>Meta dia R$</label>
+          <input type="number" id="opMeta" placeholder="opcional" step="0.01"></div>
+        <button id="opSetBanca">Salvar banca</button>
+        <div class="bias-note">Sua banca fica salva só neste aparelho. Serve para calcular
+          o resultado real das operações que você registrar.</div>
+      </div>`;
+    document.getElementById('opSetBanca').onclick=()=>{
+      const b=parseFloat(document.getElementById('opBanca').value);
+      if(isNaN(b)||b<=0){ document.getElementById('opBanca').focus(); return; }
+      Op.banca=b;
+      Op.riscoPct=parseFloat(document.getElementById('opRisco').value)||1;
+      Op.metaDia=parseFloat(document.getElementById('opMeta').value)||0;
+      saveOp(); renderOp(State.data);
+    };
+    return;
+  }
+
+  // tem operação ativa -> acompanhamento ao vivo
+  if(Op.ativa){
+    const o=Op.ativa;
+    const dir = o.side==='compra' ? 1 : -1;
+    const varPct = (price - o.entry)/o.entry*100*dir;
+    const pnlSimples = (varPct/100) * o.size; // R$ aproximado pela exposição
+    const win = varPct>=0;
+
+    // condições de saída (o que vier primeiro)
+    let exit=null;
+    if(o.side==='compra'){
+      if(price>=o.alvo) exit='Alvo atingido';
+      else if(price<=o.stop) exit='Stop atingido';
+    }else{
+      if(price<=o.alvo) exit='Alvo atingido';
+      else if(price>=o.stop) exit='Stop atingido';
+    }
+    if(!exit && d.bias){
+      if(o.side==='compra' && d.bias.side==='venda' && d.bias.pct>=65) exit='Viés inverteu para venda';
+      if(o.side==='venda' && d.bias.side==='compra' && d.bias.pct>=65) exit='Viés inverteu para compra';
+    }
+    if(!exit && d.indicators){
+      if(o.side==='compra' && d.indicators.rsi>=70) exit='RSI esticado (sobrecompra)';
+      if(o.side==='venda' && d.indicators.rsi<=30) exit='RSI esticado (sobrevenda)';
+    }
+
+    el.innerHTML=`
+      <div class="op-live">
+        <div class="op-pnl">
+          <div class="big ${win?'win':'loss'}">${varPct>=0?'+':''}${varPct.toFixed(2)}%</div>
+          <div class="sub">${o.side.toUpperCase()} · entrada $${o.entry.toFixed(2)} · agora $${price.toFixed(2)}</div>
+          <div class="sub">Exposição: R$ ${o.size.toFixed(2)} · parcial: ${pnlSimples>=0?'+':''}R$ ${pnlSimples.toFixed(2)}</div>
+        </div>
+        <div class="op-levels">
+          <div class="lv"><div class="k">Stop</div><div class="v" style="color:var(--down)">$${o.stop.toFixed(2)}</div></div>
+          <div class="lv"><div class="k">Entrada</div><div class="v">$${o.entry.toFixed(2)}</div></div>
+          <div class="lv"><div class="k">Alvo</div><div class="v" style="color:var(--up)">$${o.alvo.toFixed(2)}</div></div>
+        </div>
+        ${ exit
+          ? `<div class="op-exit go">⚠ SAIR AGORA — ${exit}</div>`
+          : `<div class="op-exit hold">Operação em andamento · acompanhe</div>` }
+        <button id="opClose">Encerrei a operação</button>
+      </div>`;
+
+    if(exit && State.notifReady && Notification.permission==='granted'){
+      if(!o.notified){ new Notification('AUmanager · sair da operação',{body:exit+' · ouro $'+price.toFixed(2)}); o.notified=true; saveOp(); }
+    }
+
+    document.getElementById('opClose').onclick=()=>{
+      // registra resultado real
+      const resultado = pnlSimples;
+      Op.ganhoDia += resultado;
+      if(resultado<0) Op.perdasSeguidas++; else Op.perdasSeguidas=0;
+      Op.ativa=null; saveOp(); renderOp(State.data);
+    };
+    return;
+  }
+
+  // sem operação ativa -> registrar nova + avisos de parada
+  const sugAlvo = price ? (price*1.02) : 0;
+  const sugStop = price ? (price*0.99) : 0;
+  const expo = Op.banca * (Op.riscoPct/100) * 10; // exposição sugerida
+
+  let stopWarn='';
+  if(Op.perdasSeguidas>=3) stopWarn=`<div class="stop-warn">🛑 Você teve ${Op.perdasSeguidas} perdas seguidas hoje. Considere parar e revisar — o emocional costuma piorar a sequência.</div>`;
+  else if(Op.metaDia>0 && Op.ganhoDia>=Op.metaDia) stopWarn=`<div class="stop-warn">🎯 Meta diária atingida (R$ ${Op.ganhoDia.toFixed(2)}). Bom momento para parar no verde.</div>`;
+
+  el.innerHTML=`
+    <div class="op-setup">
+      <div class="op-row" style="justify-content:space-between">
+        <span style="font-size:12px;color:var(--muted)">Banca: R$ ${Op.banca.toFixed(2)} · dia: ${Op.ganhoDia>=0?'+':''}R$ ${Op.ganhoDia.toFixed(2)}</span>
+        <a id="opEditBanca" style="font-size:11px;color:var(--muted);cursor:pointer;text-decoration:underline">editar</a>
+      </div>
+      ${stopWarn}
+      <div class="op-side">
+        <button id="opBuy" class="off">COMPRA</button>
+        <button id="opSell" class="off">VENDA</button>
+      </div>
+      <div class="op-row"><label>Entrada $</label>
+        <input type="number" id="opEntry" value="${price?price.toFixed(2):''}" step="0.01"></div>
+      <div class="op-row"><label>Alvo $</label>
+        <input type="number" id="opAlvo" value="${sugAlvo?sugAlvo.toFixed(2):''}" step="0.01"></div>
+      <div class="op-row"><label>Stop $</label>
+        <input type="number" id="opStop" value="${sugStop?sugStop.toFixed(2):''}" step="0.01"></div>
+      <div class="op-row"><label>Exposição R$</label>
+        <input type="number" id="opSize" value="${expo?expo.toFixed(2):''}" step="0.01"></div>
+      <button id="opStart" disabled style="opacity:.5">Escolha COMPRA ou VENDA</button>
+      <div class="bias-note">Registre a operação que você fez na sua corretora. O app acompanha
+        e te avisa o momento de sair (alvo, stop, viés invertido ou RSI esticado — o que vier primeiro).</div>
+    </div>`;
+
+  let chosen=null;
+  const buyBtn=document.getElementById('opBuy'), sellBtn=document.getElementById('opSell');
+  const startBtn=document.getElementById('opStart');
+  function pick(side){
+    chosen=side;
+    buyBtn.className = side==='compra'?'sel-buy':'off';
+    sellBtn.className = side==='venda'?'sel-sell':'off';
+    startBtn.disabled=false; startBtn.style.opacity='1';
+    startBtn.textContent='Iniciar acompanhamento';
+    // ao trocar lado, recalcula sugestão de alvo/stop
+    const e=parseFloat(document.getElementById('opEntry').value)||price;
+    if(side==='compra'){ document.getElementById('opAlvo').value=(e*1.02).toFixed(2); document.getElementById('opStop').value=(e*0.99).toFixed(2); }
+    else { document.getElementById('opAlvo').value=(e*0.98).toFixed(2); document.getElementById('opStop').value=(e*1.01).toFixed(2); }
+  }
+  buyBtn.onclick=()=>pick('compra');
+  sellBtn.onclick=()=>pick('venda');
+  document.getElementById('opEditBanca').onclick=()=>{ Op.banca=0; saveOp(); renderOp(State.data); };
+  startBtn.onclick=()=>{
+    if(!chosen) return;
+    const entry=parseFloat(document.getElementById('opEntry').value);
+    const alvo=parseFloat(document.getElementById('opAlvo').value);
+    const stop=parseFloat(document.getElementById('opStop').value);
+    const size=parseFloat(document.getElementById('opSize').value)||0;
+    if(isNaN(entry)||isNaN(alvo)||isNaN(stop)){ return; }
+    Op.ativa={ side:chosen, entry, alvo, stop, size, ts:Date.now(), notified:false };
+    saveOp(); renderOp(State.data);
+  };
+}
+
 async function refresh(){
   State.data=await loadData();
   renderTicker(State.data);
   renderChart(State.data);
   renderIndicators(State.data);
   renderReading(State.data);
+  renderBias(State.data);
+  renderOp(State.data);
   renderNews(State.data);
   checkAlerts(State.data);
 }
 window.addEventListener('resize',()=>{if(State.data)renderChart(State.data);});
 
 /* ---------- BOOT ---------- */
+loadOp();
 if(fbReady){
   // mostra a tela de login; onAuthStateChanged decide o resto
   showGate(true);
