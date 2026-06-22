@@ -287,8 +287,22 @@
     <h1>AUmanager <span class="au">XAU/USD</span></h1>
     <span class="sub">Leitura de analista · técnico + geopolítica</span>
   </div>
-  <span class="modepill demo" id="modePill">modo demo</span>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="ghost tiny" id="helpBtn" style="padding:5px 12px">? Ajuda</button>
+    <span class="modepill demo" id="modePill">modo demo</span>
+  </div>
 </header>
+
+<!-- Modal de Ajuda / Tutorial -->
+<div class="gate hidden" id="helpModal">
+  <div class="gate-box" style="max-width:560px;max-height:85vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h2 style="margin:0">Como usar o AUmanager</h2>
+      <span style="cursor:pointer;font-size:20px;color:var(--muted)" id="helpClose">✕</span>
+    </div>
+    <div id="helpContent" style="font-size:13px;line-height:1.6;color:#cdd6e1"></div>
+  </div>
+</div>
 
 <div class="statusbar demo" id="statusbar">
   <span class="who" id="whoLabel">Visitante · modo demonstração</span>
@@ -1058,6 +1072,23 @@ function renderOp(d){
     saveOp(); renderOp(State.data);
   };
 }
+
+/* ---------- AJUDA / TUTORIAL ---------- */
+document.getElementById('helpContent').innerHTML = `
+  <p style="margin-bottom:12px;color:var(--muted)">Em poucos minutos você domina o app. A decisão de operar é sempre sua — isto é uma ferramenta de análise e estudo.</p>
+  <p><strong style="color:var(--gold-soft)">1 · Painel principal</strong><br>
+  No topo: preço do ouro, fechamento, máxima/mínima. O gráfico mostra as velas reais. À direita, os indicadores (RSI, MACD, médias) já calculados.</p>
+  <p style="margin-top:10px"><strong style="color:var(--gold-soft)">2 · Viés do Mercado</strong><br>
+  Resume tudo: mostra se o mercado está "suscetível a compra" ou "a venda" e a força em %. Quanto maior a %, mais os indicadores concordam. É leitura de estudo, não ordem.</p>
+  <p style="margin-top:10px"><strong style="color:var(--gold-soft)">3 · Minha Operação</strong><br>
+  Informe sua banca uma vez. Quando operar de verdade na corretora, registre aqui: escolha COMPRA/VENDA, o preço de entrada, ajuste alvo/stop (sugeridos +2%/−1%). O app acompanha ao vivo e avisa <strong>SAIR AGORA</strong> quando bater o alvo, o stop, o viés inverter ou o RSI esticar — o que vier primeiro. Ao sair na corretora, clique em "Encerrei".</p>
+  <p style="margin-top:10px"><strong style="color:var(--gold-soft)">4 · Parada segura</strong><br>
+  O app avisa após 3 perdas seguidas (hora de revisar) ou quando bater sua meta diária (parar no verde).</p>
+  <p style="margin-top:10px"><strong style="color:var(--gold-soft)">5 · Notificações</strong><br>
+  Clique em "Ativar notificações" e permita. Com o app aberto, você recebe avisos na tela mesmo em outra aba.</p>
+  <p style="margin-top:14px;font-size:11px;color:var(--muted)">O mercado de ouro envolve risco. Esta ferramenta não é recomendação de investimento e não garante resultado.</p>`;
+document.getElementById('helpBtn').onclick=()=>document.getElementById('helpModal').classList.remove('hidden');
+document.getElementById('helpClose').onclick=()=>document.getElementById('helpModal').classList.add('hidden');
 
 async function refresh(){
   State.data=await loadData();
