@@ -900,6 +900,16 @@ function renderBias(d){
   const b=d.bias;
   if(!b){ el.innerHTML='<div style="color:var(--muted);font-size:12px">Sem dados.</div>'; return; }
   el.innerHTML=`
+    ${b.reversao?`<div style="background:${b.reversao.lado==='compra'?'rgba(63,184,143,.15)':'rgba(224,86,107,.15)'};
+      border:1px solid ${b.reversao.lado==='compra'?'var(--up)':'var(--down)'};border-radius:8px;
+      padding:10px 12px;margin-bottom:12px">
+      <div style="font-weight:600;color:${b.reversao.lado==='compra'?'var(--up)':'var(--down)'};font-size:13px">
+        ⚡ REVERSÃO PROVÁVEL ${b.reversao.lado==='compra'?'DE ALTA':'DE BAIXA'}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">${b.reversao.sinais.map(escapeHtml).join(' · ')}</div>
+    </div>`:''}
+    ${(!b.reversao && b.exaustao)?`<div style="background:rgba(232,161,58,.1);border:1px solid var(--warn);
+      border-radius:8px;padding:9px 12px;margin-bottom:12px;font-size:12px;color:var(--warn)">
+      ⏳ Sinal de exaustão de ${b.exaustao==='compra'?'alta':'baixa'} — aguardando confirmação para reversão</div>`:''}
     <div class="bias-head">
       <span class="bias-label ${b.side}">${b.label}</span>
       <span class="bias-pct ${b.side}">${b.pct}%</span>
@@ -908,7 +918,11 @@ function renderBias(d){
       <div class="b" style="width:${b.buyPct}%"></div>
       <div class="s" style="width:${b.sellPct}%"></div>
     </div>
-    <div class="bias-legend"><span>Compra ${b.buyPct}%</span><span>Venda ${b.sellPct}%</span></div>`;
+    <div class="bias-legend"><span>Compra ${b.buyPct}%</span><span>Venda ${b.sellPct}%</span></div>
+    ${b.fatores&&b.fatores.length?`<div style="margin-top:10px;font-size:11px;color:var(--muted)">
+      <div style="text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Fatores detectados</div>
+      ${b.fatores.map(f=>`<div style="padding:2px 0">› ${escapeHtml(f)}</div>`).join('')}
+    </div>`:''}`;
 }
 
 /* ===================== BANCA + OPERAÇÃO ===================== */
@@ -1018,8 +1032,11 @@ function renderOp(d){
   }
 
   // sem operação ativa -> registrar nova + avisos de parada
-  const sugAlvo = price ? (price*1.02) : 0;
-  const sugStop = price ? (price*0.99) : 0;
+  // sugestão por ATR vinda do viés (profissional); fallback p/ % se não houver
+  const sug = d && d.bias && d.bias.sug ? d.bias.sug : null;
+  const sugAlvo = sug ? sug.alvo : (price ? price*1.02 : 0);
+  const sugStop = sug ? sug.stop : (price ? price*0.99 : 0);
+  const atrInfo = d && d.bias && d.bias.atr ? d.bias.atr : null;
   const expo = Op.banca * (Op.riscoPct/100) * 10; // exposição sugerida
 
   let stopWarn='';
@@ -1046,8 +1063,9 @@ function renderOp(d){
       <div class="op-row"><label>Exposição R$</label>
         <input type="number" id="opSize" value="${expo?expo.toFixed(2):''}" step="0.01"></div>
       <button id="opStart" disabled style="opacity:.5">Escolha COMPRA ou VENDA</button>
-      <div class="bias-note">Registre a operação que você fez na sua corretora. O app acompanha
-        e te avisa o momento de sair (alvo, stop, viés invertido ou RSI esticado — o que vier primeiro).</div>
+      <div class="bias-note">Alvo e stop sugeridos pela volatilidade real (ATR${atrInfo?' ≈ '+atrInfo.toFixed(2):''}):
+        risco de 1,5×ATR e ganho de 2× o risco (R:R 1:2). Ajuste se quiser.
+        O app acompanha e avisa o momento de sair — alvo, stop, viés invertido ou RSI esticado, o que vier primeiro.</div>
     </div>`;
 
   let chosen=null;
@@ -1061,8 +1079,9 @@ function renderOp(d){
     startBtn.textContent='Iniciar acompanhamento';
     // ao trocar lado, recalcula sugestão de alvo/stop
     const e=parseFloat(document.getElementById('opEntry').value)||price;
-    if(side==='compra'){ document.getElementById('opAlvo').value=(e*1.02).toFixed(2); document.getElementById('opStop').value=(e*0.99).toFixed(2); }
-    else { document.getElementById('opAlvo').value=(e*0.98).toFixed(2); document.getElementById('opStop').value=(e*1.01).toFixed(2); }
+    const risco = atrInfo ? 1.5*atrInfo : e*0.01;
+    if(side==='compra'){ document.getElementById('opAlvo').value=(e+2*risco).toFixed(2); document.getElementById('opStop').value=(e-risco).toFixed(2); }
+    else { document.getElementById('opAlvo').value=(e-2*risco).toFixed(2); document.getElementById('opStop').value=(e+risco).toFixed(2); }
   }
   buyBtn.onclick=()=>pick('compra');
   sellBtn.onclick=()=>pick('venda');
@@ -1081,11 +1100,11 @@ function renderOp(d){
 
 /* ---------- AJUDA / TUTORIAL ---------- */
 document.getElementById('helpContent').innerHTML = `
-  <p style="margin-bottom:12px;color:var(--muted)">Em poucos minutos você domina o app. A decisão de operar é sempre sua — isto é uma ferramenta de análise e estudo.</p>
+  <p style="margin-bottom:12px;color:var(--muted)">Em poucos minutos você domina o app. O AUmanager é sua ferramenta de auxílio à decisão na operação — a decisão final é sempre sua.</p>
   <p><strong style="color:var(--gold-soft)">1 · Painel principal</strong><br>
   No topo: preço do ouro, fechamento, máxima/mínima. O gráfico mostra as velas reais. À direita, os indicadores (RSI, MACD, médias) já calculados.</p>
   <p style="margin-top:10px"><strong style="color:var(--gold-soft)">2 · Viés do Mercado</strong><br>
-  Resume tudo: mostra se o mercado está "suscetível a compra" ou "a venda" e a força em %. Quanto maior a %, mais os indicadores concordam. É leitura de estudo, não ordem.</p>
+  Resume tudo: mostra se o mercado está "suscetível a compra" ou "a venda" e a força em %. Quanto maior a %, mais os indicadores e a estrutura de preço convergem para o mesmo lado.</p>
   <p style="margin-top:10px"><strong style="color:var(--gold-soft)">3 · Minha Operação</strong><br>
   Informe sua banca uma vez. Quando operar de verdade na corretora, registre aqui: escolha COMPRA/VENDA, o preço de entrada, ajuste alvo/stop (sugeridos +2%/−1%). O app acompanha ao vivo e avisa <strong>SAIR AGORA</strong> quando bater o alvo, o stop, o viés inverter ou o RSI esticar — o que vier primeiro. Ao sair na corretora, clique em "Encerrei".</p>
   <p style="margin-top:10px"><strong style="color:var(--gold-soft)">4 · Parada segura</strong><br>
@@ -1121,8 +1140,30 @@ function renderMarketStatus(d){
   }
 }
 
+function renderMaintenance(){
+  const grid=document.querySelector('.grid');
+  const ticker=document.getElementById('ticker');
+  const mc=document.getElementById('marketClosed');
+  if(grid) grid.style.display='none';
+  if(ticker) ticker.style.display='none';
+  if(mc){
+    mc.style.display='block';
+    mc.innerHTML=`<div class="market-closed" style="flex-direction:column;text-align:center;padding:48px 24px;gap:14px">
+      <span class="dot" style="width:14px;height:14px;background:var(--warn)"></span>
+      <div style="font-family:var(--disp);font-size:22px;color:var(--ink)">Em manutenção</div>
+      <div style="max-width:420px;line-height:1.6">O AUmanager está em atualização no momento.
+      Voltamos em breve com tudo funcionando. Obrigado pela paciência.</div>
+    </div>`;
+  }
+}
+
 async function refresh(){
   State.data=await loadData();
+  // modo manutenção (chave no Worker)
+  if(State.data && State.data.manutencao){
+    renderMaintenance();
+    return;
+  }
   renderMarketStatus(State.data);
   // mercado fechado: zera tudo, mostra só a mensagem
   if(State.data && State.data.marketOpen===false){
